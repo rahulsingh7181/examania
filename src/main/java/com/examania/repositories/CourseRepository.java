@@ -11,6 +11,6 @@ import java.util.List;
 @Repository
 public interface CourseRepository extends JpaRepository<CourseEntity, String> {
 
-    @Query("SELECT u FROM CourseEntity u WHERE u.isActive = true")
+    @Query("SELECT u FROM     CourseEntity u WHERE u.isActive = true")
     List<CourseEntity> findAllActiveCourses();
 }
