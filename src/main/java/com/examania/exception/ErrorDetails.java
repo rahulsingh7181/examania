@@ -2,6 +2,7 @@ package com.examania.exception;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;
+import org.springframework.http.HttpStatus;
 
 import java.util.Date;
 import java.util.List;
@@ -11,5 +12,5 @@ import java.util.List;
 public class ErrorDetails {
     private Date timestamp;
     private String message;
-    private List<String> details;
+    private HttpStatus details;
 }

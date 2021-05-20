@@ -7,6 +7,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Optional;
 
 @RestController
 @RequestMapping(path = "web/api/v1/courses")
@@ -15,19 +16,24 @@ public class CourseController {
     @Autowired
     private ExamaniaService examaniaService;
 
+    @GetMapping("/{courseGuid}")
+    public Optional<CourseEntity> getSingleCourse(String courseGuid) {
+        return examaniaService.getSingleCourse(courseGuid);
+    }
+
     @GetMapping
     public List<CourseEntity> getCourses() {
         return examaniaService.getAllCourses();
     }
 
     @PostMapping
-    public CourseEntity addCourse(@RequestBody CourseEntity courseEntity) {
-        return examaniaService.addCourses(courseEntity);
+    public ResponseEntity<?> addCourse(@RequestBody CourseEntity courseEntity) {
+        return examaniaService.addCourse(courseEntity);
     }
 
     @PutMapping("/{courseGuid}")
-    public CourseEntity updateCourse(@PathVariable String courseGuid, @RequestBody CourseEntity courseEntity) {
-        return examaniaService.updateCourses(courseGuid, courseEntity);
+    public ResponseEntity<?> updateCourse(@PathVariable String courseGuid, @RequestBody CourseEntity courseEntity) {
+        return examaniaService.updateCourse(courseGuid, courseEntity);
     }
 
     @DeleteMapping("/{courseGuid}")

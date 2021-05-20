@@ -7,6 +7,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Optional;
 
 @RestController
 @RequestMapping(path = "web/api/v1/rules")
@@ -15,18 +16,23 @@ public class RuleController {
     @Autowired
     private ExamaniaService examaniaService;
 
+    @GetMapping("/{ruleGuid}")
+    public Optional<RuleEntity> getSingleRule(@PathVariable String ruleGuid) {
+        return examaniaService.getSingleRule(ruleGuid);
+    }
+
     @GetMapping
     public List<RuleEntity> getAllRules() {
         return examaniaService.getAllRules();
     }
 
     @PostMapping
-    public RuleEntity addRule(@RequestBody RuleEntity ruleEntity) {
+    public ResponseEntity<?> addRule(@RequestBody RuleEntity ruleEntity) {
         return examaniaService.addRule(ruleEntity);
     }
 
     @PutMapping("/{ruleGuid}")
-    public RuleEntity updateRule(@PathVariable String ruleGuid, @RequestBody RuleEntity ruleEntity) {
+    public ResponseEntity<?> updateRule(@PathVariable String ruleGuid, @RequestBody RuleEntity ruleEntity) {
         return examaniaService.updateRule(ruleGuid, ruleEntity);
     }
 

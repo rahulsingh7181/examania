@@ -1,6 +1,5 @@
 package com.examania.repositories;
 
-import com.examania.entities.QuestionEntity;
 import com.examania.entities.SubjectEntity;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
