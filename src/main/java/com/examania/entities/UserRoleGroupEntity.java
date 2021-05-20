@@ -8,6 +8,9 @@ import lombok.ToString;
 import org.hibernate.annotations.GenericGenerator;
 
 import javax.persistence.*;
+import javax.validation.constraints.NotBlank;
+import javax.validation.constraints.NotEmpty;
+import javax.validation.constraints.NotNull;
 import java.util.Date;
 
 @Entity
@@ -24,9 +27,11 @@ public class UserRoleGroupEntity extends AuditModel {
     @Column(name = "user_role_group_guid")
     private String userRoleGroupGuid;
 
+    //@NotEmpty(message = "UserRoleGroupCode is mandatory.")
     @Column(name = "user_role_group_code")
     private String userRoleGroupCode;
 
+    //@NotEmpty(message = "UserRoleGroupName is mandatory.")
     @Column(name = "user_role_group_name")
     private String userRoleGroupName;
 

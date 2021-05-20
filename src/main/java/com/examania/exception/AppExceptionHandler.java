@@ -15,18 +15,15 @@ import java.util.List;
 public class AppExceptionHandler extends ResponseEntityExceptionHandler {
 
     @ExceptionHandler(Exception.class)
-    public final ResponseEntity<?> handleAllException(Exception exception, WebRequest request){
-        List<String> details = new ArrayList<>();
-        details.add(exception.getLocalizedMessage());
-        ErrorDetails errorDetails = new ErrorDetails(new Date(), "SERVER ERROR", details);
-        return new ResponseEntity<>(errorDetails, HttpStatus.INTERNAL_SERVER_ERROR);
+    public final ResponseEntity<?> handleAllException(Exception exception){
+        ErrorDetails errorDetails = new ErrorDetails(new Date(), exception.getMessage(), HttpStatus.BAD_REQUEST);
+        return new ResponseEntity<>(errorDetails, HttpStatus.BAD_REQUEST);
     }
 
     @ExceptionHandler(ResourceNotFoundException.class)
-    public final ResponseEntity<?> handleResourceNotFoundException(ResourceNotFoundException exception, WebRequest request){
-        List<String> details = new ArrayList<>();
-        details.add(exception.getLocalizedMessage());
-        ErrorDetails errorDetails = new ErrorDetails(new Date(), "RECORD NOT FOUND", details);
-        return new ResponseEntity<>(errorDetails, HttpStatus.INTERNAL_SERVER_ERROR);
+    public final ResponseEntity<?> handleResourceNotFoundException(ResourceNotFoundException exception){
+        ErrorDetails errorDetails = new ErrorDetails(new Date(), exception.getMessage(), HttpStatus.NOT_FOUND);
+        return new ResponseEntity<>(errorDetails, HttpStatus.NOT_FOUND);
     }
+
 }

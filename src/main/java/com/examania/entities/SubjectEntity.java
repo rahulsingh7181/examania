@@ -46,4 +46,8 @@ public class SubjectEntity extends AuditModel {
 
     @Column(name = "is_active")
     private Boolean isActive;
+
+    public SubjectEntity(String subjectGuid){
+        this.subjectGuid = subjectGuid;
+    }
 }

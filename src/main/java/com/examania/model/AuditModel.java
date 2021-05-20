@@ -37,10 +37,6 @@ public abstract class AuditModel implements Serializable {
     @Column(name = "created_ip_addr")
     private String createdIpAddr;
 
-    public void setCreatedIpAddr(String createdIpAddr) {
-        this.createdIpAddr = createdIpAddr;
-    }
-
     @Column(name = "created_mac_addr")
     private String createdMacAddr;
 

@@ -13,6 +13,7 @@ import javax.servlet.http.HttpServletRequest;
 import java.util.Comparator;
 import java.util.Date;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Service
@@ -30,6 +31,12 @@ public class ExamaniaServiceImpl implements ExamaniaService {
     private RuleRepository ruleRepository;
     @Autowired
     private SubjectRepository subjectRepository;
+    @Autowired
+    private CourseSubjectMapRepository courseSubjectMapRepository;
+    @Autowired
+    private SubjectRuleMapRepository subjectRuleMapRepository;
+    @Autowired
+    private ExamRuleMapRepository examRuleMapRepository;
 
 
     @Autowired
@@ -37,18 +44,32 @@ public class ExamaniaServiceImpl implements ExamaniaService {
 
     /* ------------------------------------------ UserRoleGroup Services ------------------------------------------------------------------- */
     @Override
+    public Optional<UserRoleGroupEntity> getSingleUserRole(String userRoleGroupGuid){
+        return userRoleGroupRepository.findById(userRoleGroupGuid)
+                .map(userRole -> {
+                    return userRoleGroupRepository.findById(userRole.getUserRoleGroupGuid());
+                }).orElseThrow(() -> new ResourceNotFoundException("UserRole not found with guid : " + userRoleGroupGuid));
+    }
+
+    @Override
     public List<UserRoleGroupEntity> getUserRoles() {
         return userRoleGroupRepository.findAll();
     }
 
     @Override
-    public UserRoleGroupEntity addUserRoles(UserRoleGroupEntity userRoleGroupEntity) {
-        userRoleGroupEntity.setCreatedIpAddr(Utility.getClientIp(httpServletRequest));
-        return userRoleGroupRepository.save(userRoleGroupEntity);
+    public ResponseEntity<?> addUserRole(UserRoleGroupEntity userRoleGroupEntity) {
+        if(userRoleGroupEntity != null){
+            userRoleGroupEntity.setCreatedIpAddr(Utility.getClientIp(httpServletRequest));
+            userRoleGroupRepository.save(userRoleGroupEntity);
+            return ResponseEntity.ok("RECORD SAVED SUCCESSFULLY.");
+        }else{
+            return ResponseEntity.ok("BAD REQUEST");
+        }
+
     }
 
     @Override
-    public UserRoleGroupEntity updateUserRoles(String userRoleGroupGuid, UserRoleGroupEntity userRoleGroupEntity) {
+    public ResponseEntity<?> updateUserRole(String userRoleGroupGuid, UserRoleGroupEntity userRoleGroupEntity) {
         return userRoleGroupRepository.findById(userRoleGroupGuid)
                 .map(userRoles -> {
                     userRoles.setUserRoleGroupCode(userRoleGroupEntity.getUserRoleGroupCode().trim());
@@ -61,16 +82,17 @@ public class ExamaniaServiceImpl implements ExamaniaService {
                     userRoles.setModifiedDate(new Date());
                     userRoles.setModifiedIpAddr(Utility.getClientIp(httpServletRequest).trim());
                     userRoles.setModifiedRemarks(userRoleGroupEntity.getModifiedRemarks());
-                    return userRoleGroupRepository.save(userRoles);
+                    userRoleGroupRepository.save(userRoles);
+                    return ResponseEntity.ok("RECORD UPDATED SUCCESSFULLY.");
                 }).orElseThrow(() -> new ResourceNotFoundException("UserRole not found with guid : " + userRoleGroupGuid));
     }
 
     @Override
-    public ResponseEntity<?> deleteUserRoles(String userRoleGroupGuid) {
+    public ResponseEntity<?> deleteUserRole(String userRoleGroupGuid) {
         return userRoleGroupRepository.findById(userRoleGroupGuid)
                 .map(userRole -> {
                     userRoleGroupRepository.delete(userRole);
-                    return ResponseEntity.ok().build();
+                    return ResponseEntity.ok("RECORD DELETED SUCCESSFULLY.");
                 }).orElseThrow(() -> new ResourceNotFoundException("UserRole not found with guid : " + userRoleGroupGuid));
     }
 
@@ -85,18 +107,33 @@ public class ExamaniaServiceImpl implements ExamaniaService {
 
     /* ------------------------------------------ CourseEntity Services ------------------------------------------------------------------- */
     @Override
+    public Optional<CourseEntity> getSingleCourse(String courseGuid){
+        return courseRepository.findById(courseGuid)
+                .map(course -> {
+                    return courseRepository.findById(course.getCourseGuid());
+                }).orElseThrow(() -> new ResourceNotFoundException("Course not found with guid : " + courseGuid));
+    }
+
+    @Override
     public List<CourseEntity> getAllCourses() {
         return courseRepository.findAll();
     }
 
     @Override
-    public CourseEntity addCourses(CourseEntity courseEntity) {
-        courseEntity.setCreatedIpAddr(Utility.getClientIp(httpServletRequest));
-        return courseRepository.save(courseEntity);
+    public ResponseEntity<?> addCourse(CourseEntity courseEntity) {
+        if (courseEntity != null){
+            courseEntity.setCreatedBy("SUPER_ADMIN".trim());
+            courseEntity.setCreatedDate(new Date());
+            courseEntity.setCreatedIpAddr(Utility.getClientIp(httpServletRequest).trim());
+            courseRepository.save(courseEntity);
+            return ResponseEntity.ok("RECORD SAVED SUCCESSFULLY.");
+        }else{
+            return ResponseEntity.ok("BAD REQUEST");
+        }
     }
 
     @Override
-    public CourseEntity updateCourses(String courseGuid, CourseEntity courseEntity) {
+    public ResponseEntity<?> updateCourse(String courseGuid, CourseEntity courseEntity) {
         return courseRepository.findById(courseGuid)
                 .map(courses -> {
                     courses.setCourseCode(courseEntity.getCourseCode().trim());
@@ -107,7 +144,8 @@ public class ExamaniaServiceImpl implements ExamaniaService {
                     courses.setModifiedDate(new Date());
                     courses.setModifiedIpAddr(Utility.getClientIp(httpServletRequest).trim());
                     courses.setModifiedRemarks(courseEntity.getModifiedRemarks());
-                    return courseRepository.save(courses);
+                    courseRepository.save(courses);
+                    return ResponseEntity.ok("RECORD UPDATED SUCCESSFULLY.");
                 }).orElseThrow(() -> new ResourceNotFoundException("Course not found with guid : " + courseGuid));
     }
 
@@ -116,7 +154,7 @@ public class ExamaniaServiceImpl implements ExamaniaService {
         return courseRepository.findById(courseGuid)
                 .map(userRole -> {
                     courseRepository.delete(userRole);
-                    return ResponseEntity.ok().build();
+                    return ResponseEntity.ok("RECORD DELETED SUCCESSFULLY.");
                 }).orElseThrow(() -> new ResourceNotFoundException("Course not found with guid : " + courseGuid));
     }
 
@@ -130,6 +168,13 @@ public class ExamaniaServiceImpl implements ExamaniaService {
 
 
     /* ------------------------------------------ ExamEntity Services ------------------------------------------------------------------- */
+    @Override
+    public Optional<ExamEntity> getSingleExam(String examGuid){
+        return examRepository.findById(examGuid)
+                .map(exam -> {
+                    return examRepository.findById(exam.getExamGuid());
+                }).orElseThrow(() -> new ResourceNotFoundException("Exam not found with guid : " + examGuid));
+    }
 
     @Override
     public List<ExamEntity> getAllExams() {
@@ -137,13 +182,24 @@ public class ExamaniaServiceImpl implements ExamaniaService {
     }
 
     @Override
-    public ExamEntity addExam(ExamEntity examEntity) {
-        examEntity.setCreatedIpAddr(Utility.getClientIp(httpServletRequest));
-        return examRepository.save(examEntity);
+    public ResponseEntity<?> addExam(ExamEntity examEntity) {
+        if (examEntity != null){
+            examEntity.setStartNoticeDateTime(examEntity.getStartNoticeDateTime());
+            examEntity.setEndNoticeDateTime(examEntity.getEndNoticeDateTime());
+            examEntity.setStartDateTime(examEntity.getStartDateTime());
+            examEntity.setEndDateTime(examEntity.getEndDateTime());
+            examEntity.setCreatedBy("SUPER_ADMIN".trim());
+            examEntity.setCreatedDate(new Date());
+            examEntity.setCreatedIpAddr(Utility.getClientIp(httpServletRequest));
+            examRepository.save(examEntity);
+            return ResponseEntity.ok("RECORD SAVED SUCCESSFULLY.");
+        }else{
+            return ResponseEntity.ok("BAD REQUEST");
+        }
     }
 
     @Override
-    public ExamEntity updateExam(String examGuid, ExamEntity examEntity) {
+    public ResponseEntity<?> updateExam(String examGuid, ExamEntity examEntity) {
         return examRepository.findById(examGuid)
                 .map(exams -> {
                     exams.setExamCode(examEntity.getExamCode().trim());
@@ -158,7 +214,8 @@ public class ExamaniaServiceImpl implements ExamaniaService {
                     exams.setModifiedIpAddr(Utility.getClientIp(httpServletRequest).trim());
                     exams.setModifiedDate(new Date());
                     exams.setModifiedRemarks(examEntity.getModifiedRemarks());
-                    return examRepository.save(exams);
+                    examRepository.save(exams);
+                    return ResponseEntity.ok("RECORD UPDATED SUCCESSFULLY.");
                 }).orElseThrow(() -> new ResourceNotFoundException("Exam not found with guid : " + examGuid));
     }
 
@@ -167,7 +224,7 @@ public class ExamaniaServiceImpl implements ExamaniaService {
         return examRepository.findById(examGuid)
                 .map(exam -> {
                     examRepository.delete(exam);
-                    return ResponseEntity.ok().build();
+                    return ResponseEntity.ok("RECORD DELETED SUCCESSFULLY.");
                 }).orElseThrow(() -> new ResourceNotFoundException("Exam not found with guid : " + examGuid));
     }
 
@@ -180,6 +237,13 @@ public class ExamaniaServiceImpl implements ExamaniaService {
     }
 
     /* ------------------------------------------ QuestionEntity Services ------------------------------------------------------------------- */
+    @Override
+    public Optional<QuestionEntity> getSingleQuestion(String questionGuid){
+        return questionRepository.findById(questionGuid)
+                .map(question -> {
+                    return questionRepository.findById(question.getQuestionGuid());
+                }).orElseThrow(() -> new ResourceNotFoundException("Question not found with guid : " + questionGuid));
+    }
 
     @Override
     public List<QuestionEntity> getAllQuestions() {
@@ -187,13 +251,20 @@ public class ExamaniaServiceImpl implements ExamaniaService {
     }
 
     @Override
-    public QuestionEntity addQuestion(QuestionEntity questionEntity) {
-        questionEntity.setCreatedIpAddr(Utility.getClientIp(httpServletRequest));
-        return questionRepository.save(questionEntity);
+    public ResponseEntity<?> addQuestion(QuestionEntity questionEntity) {
+        if (questionEntity != null){
+            questionEntity.setCreatedBy("SUPER_ADMIN".trim());
+            questionEntity.setCreatedDate(new Date());
+            questionEntity.setCreatedIpAddr(Utility.getClientIp(httpServletRequest));
+            questionRepository.save(questionEntity);
+            return ResponseEntity.ok("RECORD SAVED SUCCESSFULLY.");
+        }else{
+            return ResponseEntity.ok("BAD REQUEST");
+        }
     }
 
     @Override
-    public QuestionEntity updateQuestion(String questionGuid, QuestionEntity questionEntity) {
+    public ResponseEntity<?> updateQuestion(String questionGuid, QuestionEntity questionEntity) {
         return questionRepository.findById(questionGuid)
                 .map(question -> {
                     question.setQuestionCode(questionEntity.getQuestionCode().trim());
@@ -204,7 +275,8 @@ public class ExamaniaServiceImpl implements ExamaniaService {
                     question.setModifiedIpAddr(Utility.getClientIp(httpServletRequest).trim());
                     question.setModifiedDate(new Date());
                     question.setModifiedRemarks(questionEntity.getModifiedRemarks());
-                    return questionRepository.save(question);
+                    questionRepository.save(question);
+                    return ResponseEntity.ok("RECORD UPDATED SUCCESSFULLY.");
                 }).orElseThrow(() -> new ResourceNotFoundException("Question not found with guid : " + questionGuid));
     }
 
@@ -213,7 +285,7 @@ public class ExamaniaServiceImpl implements ExamaniaService {
         return questionRepository.findById(questionGuid)
                 .map(question -> {
                     questionRepository.delete(question);
-                    return ResponseEntity.ok().build();
+                    return ResponseEntity.ok("RECORD DELETED SUCCESSFULLY.");
                 }).orElseThrow(() -> new ResourceNotFoundException("Question not found with guid : " + questionGuid));
     }
 
@@ -229,18 +301,33 @@ public class ExamaniaServiceImpl implements ExamaniaService {
     /* ------------------------------------------ RuleEntity Services ------------------------------------------------------------------- */
 
     @Override
+    public Optional<RuleEntity> getSingleRule(String ruleGuid){
+        return ruleRepository.findById(ruleGuid)
+                .map(rule -> {
+                    return ruleRepository.findById(rule.getRuleGuid());
+                }).orElseThrow(() -> new ResourceNotFoundException("Rule not found with guid : " + ruleGuid));
+    }
+
+    @Override
     public List<RuleEntity> getAllRules() {
         return ruleRepository.findAll();
     }
 
     @Override
-    public RuleEntity addRule(RuleEntity ruleEntity) {
-        ruleEntity.setCreatedIpAddr(Utility.getClientIp(httpServletRequest));
-        return ruleRepository.save(ruleEntity);
+    public ResponseEntity<?> addRule(RuleEntity ruleEntity) {
+        if (ruleEntity != null){
+            ruleEntity.setCreatedBy("SUPER_ADMIN".trim());
+            ruleEntity.setCreatedDate(new Date());
+            ruleEntity.setCreatedIpAddr(Utility.getClientIp(httpServletRequest));
+            ruleRepository.save(ruleEntity);
+            return ResponseEntity.ok("RECORD SAVED SUCCESSFULLY.");
+        }else{
+            return ResponseEntity.ok("BAD REQUEST");
+        }
     }
 
     @Override
-    public RuleEntity updateRule(String ruleGuid, RuleEntity ruleEntity) {
+    public ResponseEntity<?> updateRule(String ruleGuid, RuleEntity ruleEntity) {
         return ruleRepository.findById(ruleGuid)
                 .map(rule -> {
                     rule.setRuleCode(ruleEntity.getRuleCode().trim());
@@ -251,7 +338,8 @@ public class ExamaniaServiceImpl implements ExamaniaService {
                     rule.setModifiedIpAddr(Utility.getClientIp(httpServletRequest).trim());
                     rule.setModifiedDate(new Date());
                     rule.setModifiedRemarks(ruleEntity.getModifiedRemarks());
-                    return ruleRepository.save(rule);
+                    ruleRepository.save(rule);
+                    return ResponseEntity.ok("RECORD UPDATED SUCCESSFULLY.");
                 }).orElseThrow(() -> new ResourceNotFoundException("Rule not found with guid : " + ruleGuid));
     }
 
@@ -260,7 +348,7 @@ public class ExamaniaServiceImpl implements ExamaniaService {
         return ruleRepository.findById(ruleGuid)
                 .map(rule -> {
                     ruleRepository.delete(rule);
-                    return ResponseEntity.ok().build();
+                    return ResponseEntity.ok("RECORD DELETED SUCCESSFULLY.");
                 }).orElseThrow(() -> new ResourceNotFoundException("Rule not found with guid : " + ruleGuid));
     }
 
@@ -273,6 +361,13 @@ public class ExamaniaServiceImpl implements ExamaniaService {
     }
 
     /* ------------------------------------------ SubjectEntity Services ------------------------------------------------------------------- */
+    @Override
+    public Optional<SubjectEntity> getSingleSubject(String subjectGuid){
+        return subjectRepository.findById(subjectGuid)
+                .map(subject -> {
+                    return subjectRepository.findById(subject.getSubjectGuid());
+                }).orElseThrow(() -> new ResourceNotFoundException("Subject not found with guid : " + subjectGuid));
+    }
 
     @Override
     public List<SubjectEntity> getAllSubjects() {
@@ -280,13 +375,20 @@ public class ExamaniaServiceImpl implements ExamaniaService {
     }
 
     @Override
-    public SubjectEntity addSubject(SubjectEntity subjectEntity) {
-        subjectEntity.setCreatedIpAddr(Utility.getClientIp(httpServletRequest));
-        return subjectRepository.save(subjectEntity);
+    public ResponseEntity<?> addSubject(SubjectEntity subjectEntity) {
+        if (subjectEntity != null){
+            subjectEntity.setCreatedBy("SUPER_ADMIN".trim());
+            subjectEntity.setCreatedDate(new Date());
+            subjectEntity.setCreatedIpAddr(Utility.getClientIp(httpServletRequest));
+            subjectRepository.save(subjectEntity);
+            return ResponseEntity.ok("RECORD SAVED SUCCESSFULLY.");
+        }else{
+            return ResponseEntity.ok("BAD REQUEST");
+        }
     }
 
     @Override
-    public SubjectEntity updateSubject(String subjectGuid, SubjectEntity subjectEntity) {
+    public ResponseEntity<?> updateSubject(String subjectGuid, SubjectEntity subjectEntity) {
         return subjectRepository.findById(subjectGuid)
                 .map(subject -> {
                     subject.setSubjectCode(subjectEntity.getSubjectCode().trim());
@@ -299,8 +401,9 @@ public class ExamaniaServiceImpl implements ExamaniaService {
                     subject.setModifiedIpAddr(Utility.getClientIp(httpServletRequest).trim());
                     subject.setModifiedDate(new Date());
                     subject.setModifiedRemarks(subjectEntity.getModifiedRemarks());
-                    return subjectRepository.save(subject);
-                }).orElseThrow(() -> new ResourceNotFoundException("Rule not found with guid : " + subjectGuid));
+                    subjectRepository.save(subject);
+                    return ResponseEntity.ok("RECORD UPDATED SUCCESSFULLY.");
+                }).orElseThrow(() -> new ResourceNotFoundException("Subject not found with guid : " + subjectGuid));
     }
 
     @Override
@@ -308,8 +411,8 @@ public class ExamaniaServiceImpl implements ExamaniaService {
         return subjectRepository.findById(subjectGuid)
                 .map(subject -> {
                     subjectRepository.delete(subject);
-                    return ResponseEntity.ok().build();
-                }).orElseThrow(() -> new ResourceNotFoundException("Rule not found with guid : " + subjectGuid));
+                    return ResponseEntity.ok("RECORD DELETED SUCCESSFULLY.");
+                }).orElseThrow(() -> new ResourceNotFoundException("Subject not found with guid : " + subjectGuid));
     }
 
     @Override
@@ -318,6 +421,169 @@ public class ExamaniaServiceImpl implements ExamaniaService {
         return list.stream()
                 .sorted(Comparator.comparing(SubjectEntity::getSubjectNameEn))
                 .collect(Collectors.toList());
+    }
+
+    /* ------------------------------------------ CourseSubjectMap Services ------------------------------------------------------------------- */
+    @Override
+    public Optional<CourseSubjectMapEntity> getSingleCourseSubject(String refCourseSubGuid){
+        return courseSubjectMapRepository.findById(refCourseSubGuid)
+                .map(courseSubject -> {
+                    return courseSubjectMapRepository.findById(courseSubject.getRefCourseSubGuid());
+                }).orElseThrow(() -> new ResourceNotFoundException("Subject not found with guid : " + refCourseSubGuid));
+    }
+
+    @Override
+    public List<CourseSubjectMapEntity> getAllCourseSubject() {
+        return courseSubjectMapRepository.findAll();
+    }
+
+    @Override
+    public ResponseEntity<?> addCourseSubject(CourseSubjectMapEntity courseSubjectMapEntity) {
+        if (courseSubjectMapEntity != null){
+            courseSubjectMapEntity.setCourseEntity(new CourseEntity(courseSubjectMapEntity.getCourseEntity().getCourseGuid()));
+            courseSubjectMapEntity.setSubjectEntity(new SubjectEntity(courseSubjectMapEntity.getSubjectEntity().getSubjectGuid()));
+            courseSubjectMapEntity.setCreatedBy("SUPER_ADMIN".trim());
+            courseSubjectMapEntity.setCreatedDate(new Date());
+            courseSubjectMapEntity.setCreatedIpAddr(Utility.getClientIp(httpServletRequest));
+            courseSubjectMapRepository.save(courseSubjectMapEntity);
+            return ResponseEntity.ok("RECORD SAVED SUCCESSFULLY.");
+        }else{
+            return ResponseEntity.ok("BAD REQUEST");
+        }
+    }
+
+    @Override
+    public ResponseEntity<?> updateCourseSubject(String refCourseSubGuid, CourseSubjectMapEntity courseSubjectMapEntity) {
+        return courseSubjectMapRepository.findById(refCourseSubGuid)
+                .map(courseSubject -> {
+                    courseSubject.setCourseEntity(new CourseEntity(courseSubjectMapEntity.getCourseEntity().getCourseGuid()));
+                    courseSubject.setSubjectEntity(new SubjectEntity(courseSubjectMapEntity.getSubjectEntity().getSubjectGuid()));
+                    courseSubject.setIsActive(courseSubjectMapEntity.getIsActive());
+                    courseSubject.setModifiedBy("SUPER_ADMIN".trim());
+                    courseSubject.setModifiedIpAddr(Utility.getClientIp(httpServletRequest).trim());
+                    courseSubject.setModifiedDate(new Date());
+                    courseSubject.setModifiedRemarks(courseSubjectMapEntity.getModifiedRemarks());
+                    courseSubjectMapRepository.save(courseSubject);
+                    return ResponseEntity.ok("RECORD UPDATED SUCCESSFULLY.");
+                }).orElseThrow(() -> new ResourceNotFoundException("Subject not found with guid : " + refCourseSubGuid));
+    }
+
+    @Override
+    public ResponseEntity<?> deleteCourseSubject(String refCourseSubGuid) {
+        return courseSubjectMapRepository.findById(refCourseSubGuid)
+                .map(courseSubject -> {
+                    courseSubjectMapRepository.delete(courseSubject);
+                    return ResponseEntity.ok("RECORD DELETED SUCCESSFULLY.");
+                }).orElseThrow(() -> new ResourceNotFoundException("Subject not found with guid : " + refCourseSubGuid));
+    }
+
+    /* ------------------------------------------ SubjectRuleMap Services ------------------------------------------------------------------- */
+    @Override
+    public Optional<SubjectRuleMapEntity> getSingleSubjectRule(String refSubRuleGuid){
+        return subjectRuleMapRepository.findById(refSubRuleGuid)
+                .map(subjectRule -> {
+                    return subjectRuleMapRepository.findById(subjectRule.getRefSubRuleGuid());
+                }).orElseThrow(() -> new ResourceNotFoundException("Subject not found with guid : " + refSubRuleGuid));
+    }
+
+    @Override
+    public List<SubjectRuleMapEntity> getAllSubjectRule() {
+        return subjectRuleMapRepository.findAll();
+    }
+
+    @Override
+    public ResponseEntity<?> addSubjectRule(SubjectRuleMapEntity subjectRuleMapEntity) {
+        if (subjectRuleMapEntity != null){
+            subjectRuleMapEntity.setSubjectEntity(new SubjectEntity(subjectRuleMapEntity.getSubjectEntity().getSubjectGuid()));
+            subjectRuleMapEntity.setRuleEntity(new RuleEntity(subjectRuleMapEntity.getRuleEntity().getRuleGuid()));
+            subjectRuleMapEntity.setCreatedBy("SUPER_ADMIN".trim());
+            subjectRuleMapEntity.setCreatedDate(new Date());
+            subjectRuleMapEntity.setCreatedIpAddr(Utility.getClientIp(httpServletRequest));
+            subjectRuleMapRepository.save(subjectRuleMapEntity);
+            return ResponseEntity.ok("RECORD SAVED SUCCESSFULLY.");
+        }else{
+            return ResponseEntity.ok("BAD REQUEST");
+        }
+    }
+
+    @Override
+    public ResponseEntity<?> updateSubjectRule(String refSubRuleGuid, SubjectRuleMapEntity subjectRuleMapEntity){
+        return subjectRuleMapRepository.findById(refSubRuleGuid)
+                .map(subjectRule -> {
+                    subjectRule.setSubjectEntity(new SubjectEntity(subjectRuleMapEntity.getSubjectEntity().getSubjectGuid()));
+                    subjectRuleMapEntity.setRuleEntity(new RuleEntity(subjectRuleMapEntity.getRuleEntity().getRuleGuid()));
+                    subjectRule.setIsActive(subjectRuleMapEntity.getIsActive());
+                    subjectRule.setModifiedBy("SUPER_ADMIN".trim());
+                    subjectRule.setModifiedIpAddr(Utility.getClientIp(httpServletRequest).trim());
+                    subjectRule.setModifiedDate(new Date());
+                    subjectRule.setModifiedRemarks(subjectRuleMapEntity.getModifiedRemarks());
+                    subjectRuleMapRepository.save(subjectRule);
+                    return ResponseEntity.ok("RECORD UPDATED SUCCESSFULLY.");
+                }).orElseThrow(() -> new ResourceNotFoundException("Subject not found with guid : " + refSubRuleGuid));
+    }
+
+    @Override
+    public ResponseEntity<?> deleteSubjectRule(String refSubRuleGuid) {
+        return subjectRuleMapRepository.findById(refSubRuleGuid)
+                .map(subjectRule -> {
+                    subjectRuleMapRepository.delete(subjectRule);
+                    return ResponseEntity.ok("RECORD DELETED SUCCESSFULLY.");
+                }).orElseThrow(() -> new ResourceNotFoundException("Subject not found with guid : " + refSubRuleGuid));
+    }
+
+    /* ------------------------------------------ SubjectRuleMap Services ------------------------------------------------------------------- */
+
+    @Override
+    public Optional<ExamRuleMapEntity> getSingleExamRule(String refExamRuleGuid){
+        return examRuleMapRepository.findById(refExamRuleGuid)
+                .map(examRule -> {
+                    return examRuleMapRepository.findById(examRule.getRefExamRuleGuid());
+                }).orElseThrow(() -> new ResourceNotFoundException("Subject not found with guid : " + refExamRuleGuid));
+    }
+
+    @Override
+    public List<ExamRuleMapEntity> getAllExamRule() {
+        return examRuleMapRepository.findAll();
+    }
+
+    @Override
+    public ResponseEntity<?> addExamRule(ExamRuleMapEntity examRuleMapEntity) {
+        if (examRuleMapEntity != null){
+            examRuleMapEntity.setExamEntity(new ExamEntity(examRuleMapEntity.getExamEntity().getExamGuid()));
+            examRuleMapEntity.setRuleEntity(new RuleEntity(examRuleMapEntity.getRuleEntity().getRuleGuid()));
+            examRuleMapEntity.setCreatedBy("SUPER_ADMIN".trim());
+            examRuleMapEntity.setCreatedDate(new Date());
+            examRuleMapEntity.setCreatedIpAddr(Utility.getClientIp(httpServletRequest));
+            examRuleMapRepository.save(examRuleMapEntity);
+            return ResponseEntity.ok("RECORD SAVED SUCCESSFULLY.");
+        }else{
+            return ResponseEntity.ok("BAD REQUEST");
+        }
+    }
+
+    @Override
+    public ResponseEntity<?> updateExamRule(String refExamRuleGuid, ExamRuleMapEntity examRuleMapEntity){
+        return examRuleMapRepository.findById(refExamRuleGuid)
+                .map(examRule -> {
+                    examRuleMapEntity.setExamEntity(new ExamEntity(examRuleMapEntity.getExamEntity().getExamGuid()));
+                    examRuleMapEntity.setRuleEntity(new RuleEntity(examRuleMapEntity.getRuleEntity().getRuleGuid()));
+                    examRule.setIsActive(examRuleMapEntity.getIsActive());
+                    examRule.setModifiedBy("SUPER_ADMIN".trim());
+                    examRule.setModifiedIpAddr(Utility.getClientIp(httpServletRequest).trim());
+                    examRule.setModifiedDate(new Date());
+                    examRule.setModifiedRemarks(examRuleMapEntity.getModifiedRemarks());
+                    examRuleMapRepository.save(examRule);
+                    return ResponseEntity.ok("RECORD UPDATED SUCCESSFULLY.");
+                }).orElseThrow(() -> new ResourceNotFoundException("Subject not found with guid : " + refExamRuleGuid));
+    }
+
+    @Override
+    public ResponseEntity<?> deleteExamRule(String refExamRuleGuid) {
+        return examRuleMapRepository.findById(refExamRuleGuid)
+                .map(courseSubject -> {
+                    examRuleMapRepository.delete(courseSubject);
+                    return ResponseEntity.ok("RECORD DELETED SUCCESSFULLY.");
+                }).orElseThrow(() -> new ResourceNotFoundException("Subject not found with guid : " + refExamRuleGuid));
     }
 
 }

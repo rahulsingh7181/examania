@@ -53,4 +53,8 @@ public class ExamEntity extends AuditModel {
 
     @Column(name = "is_active")
     private Boolean isActive;
+
+    public ExamEntity(String examGuid){
+        this.examGuid = examGuid;
+    }
 }

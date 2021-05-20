@@ -41,4 +41,8 @@ public class RuleEntity extends AuditModel {
 
     @Column(name = "is_active")
     private Boolean isActive;
+
+    public RuleEntity(String ruleGuid){
+        this.ruleGuid = ruleGuid;
+    }
 }
